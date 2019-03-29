@@ -14,4 +14,4 @@ you can fix in line61 of "mainls.py".
 
 After, run "python mainls.py" starts training.
 
-when training is over, run like "python pred.py test/testblk 1" executes predicting. outputs converted images.
+when training is over, run like "python pred.py test/testblk 1" executes predicting, outputs converted images.

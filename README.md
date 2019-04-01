@@ -1,5 +1,5 @@
 # starGAN-LSGAN
-simply implementation of starGAN-LSGAN. this implementation has many issues. I will revise this over time.
+simply implementation of starGAN-LSGAN using TensorFlow. this implementation has many issues. I will revise this over time.
 
 original paper:https://arxiv.org/abs/1711.09020
 

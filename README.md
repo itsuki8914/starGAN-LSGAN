@@ -61,4 +61,4 @@ Hair color conversion of anime face
 
 Leftmost is input, others are output.
 
-<img src = 'examples/hair_color.jpg' width = '300px'>
+<img src = 'examples/hair_color.png' width = '300px'>

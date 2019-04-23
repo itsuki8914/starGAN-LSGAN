@@ -7,16 +7,17 @@ import time
 import matplotlib.pyplot as plt
 from model import *
 
-DATASET_DIR = "data"
+DATASET_DIR = "train"
 VAL_DIR ="test"
 MODEL_DIR = "model"
 OUT_DIR_A2B = "out"
-domains=["blk","bld","blu","red","wht"]
+domains=os.listdir(DATASET_DIR)
 num_domains = len(domains)
 
 def main(arg):
 
-    folder_path = VAL_DIR + os.sep + arg[0]
+    #folder_path = VAL_DIR + os.sep + arg[0]
+    folder_path = arg[0]
     directions = int(arg[1])
 
     print("folderA = {}, direction = {} ".format(arg[0],domains[directions]))
@@ -64,18 +65,16 @@ def main(arg):
         input = cv2.resize(img,(img_size,img_size))
         input = input.reshape(1, img_size, img_size, 3)
 
-        print(np.identity(num_domains))
-        print(directions)
+    
         directions = np.vectorize(int)(directions)
         one_hot_dir = np.identity(num_domains)[directions]
         one_hot_dir = one_hot_dir.reshape(1,num_domains)
-        print(one_hot_dir)
 
         out = sess.run(fake_A2B,feed_dict={real_A:input, label_A2B:one_hot_dir})
         out = out.reshape(img_size,img_size,3)
         image_name = os.path.splitext(os.path.basename(img_path))[0]
         denorm_o = (out + 1) * 127.5
-        cv2.imwrite(OUT_DIR_A2B+os.sep+'predicted' + image_name + '_{}.png'.format(directions), denorm_o)
+        cv2.imwrite(OUT_DIR_A2B+os.sep+'predicted_' + image_name + "_" + str(directions) + '.png', denorm_o)
 
     print("%.4e sec took for predicting" %(time.time()-start))
 
@@ -84,7 +83,6 @@ if __name__ == '__main__':
     try:
         arg.append(sys.argv[1])
         arg.append(sys.argv[2])
+        main(arg)
     except:
         print("Usage: python pred.py [folder] [direction]")
-
-    main(arg)

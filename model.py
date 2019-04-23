@@ -6,7 +6,7 @@ import cv2,math,glob,random,time
 import time
 import matplotlib.pyplot as plt
 
-REGULARIZER_COF = 1e-5
+REGULARIZER_COF = 1e-4
 """
 #for bs >1
 def _norm(x,name="BN",isTraining=True):
@@ -101,7 +101,7 @@ def _deconv_layer(x,input_layer, output_layer, stride=2, filter_size=3, name="de
     h = tf.nn.leaky_relu(h)
     return h
 
-def buildGenerator(x,label_A2B,num_domains,reuse=False,isTraining=True,nBatch=64,ksize=4,resBlock=9,name="generator"):
+def buildGenerator(x,label_A2B,num_domains,reuse=False,isTraining=True,nBatch=64,ksize=4,resBlock=12,name="generator"):
 
     bs, h, w, c = x.get_shape().as_list()
     #l = tf.one_hot(label_A2B,num_domains,name="label_onehot")
@@ -147,7 +147,7 @@ def buildGenerator(x,label_A2B,num_domains,reuse=False,isTraining=True,nBatch=64
 def _conv_layer_dis(x,input_layer, output_layer, stride, filter_size=3, name="conv", isTraining=True):
     conv_w, conv_b = _conv_variable([filter_size,filter_size,input_layer,output_layer],name="conv"+name)
     h = _conv2d(x,conv_w,stride=stride) + conv_b
-    h = _norm(h,name)
+    #h = _norm(h,name)
     h = tf.nn.leaky_relu(h)
     return h
 
@@ -174,6 +174,8 @@ def buildDiscriminator(y,num_domains,reuse=False,isTraining=False,nBatch=16,ksiz
         h = _conv2d(h,conv_w, stride=1) + conv_b
         h = tf.reshape(tf.reduce_mean(h,axis=[1,2]),[-1,1+num_domains])
 
-    src = h[:,0]
-    cls = h[:,1:]
+        src = h[:,0]
+        cls = h[:,1:]
+        cls = tf.nn.softmax(cls)
+
     return src, cls

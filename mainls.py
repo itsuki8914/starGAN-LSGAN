@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 from model import *
 from btgen import *
 
-
 SAVE_DIR = "model"
 SVIM_DIR = "samples"
-
+TRAIN_DIR = "train"
+VAL_DIR = "test"
 
 def tileImage(imgs):
     d = int(math.sqrt(imgs.shape[0]-1))+1
@@ -58,27 +58,24 @@ def main():
     critic = 5
 
     # loading images on training
-    domains=["blk","bld","blu","red","wht"]
+    domains= os.listdir(TRAIN_DIR)
+    v_domains= os.listdir(VAL_DIR)
     btGens = []
     valGens = []
     genLens = []
     valLens = []
     num_domains = len(domains)
     for i, j in enumerate(domains):
-        imgen = BatchGenerator(img_size=img_size, wavdir="train/train"+j,dirID=i, num_domains=num_domains)
-        vlgen = BatchGenerator(img_size=img_size, wavdir="test/test"+j,dirID=i, num_domains=num_domains, aug=False,)
+        imgen = BatchGenerator(img_size=img_size, imgdir="{}/{}".format(TRAIN_DIR,j),dirID=i, num_domains=num_domains)
         btGens.append(imgen)
-        valGens.append(vlgen)
-
-        length = foloderLength("train/train"+j)
-        vlength = foloderLength("test/test"+j)
+        length = foloderLength("{}/{}".format(TRAIN_DIR,j))
         genLens.append(length)
+
+    for i, j in enumerate(v_domains):
+        vlgen = BatchGenerator(img_size=img_size, imgdir="{}/{}".format(VAL_DIR,j),dirID=i, num_domains=num_domains, aug=False)
+        valGens.append(vlgen)
+        vlength = foloderLength("{}/{}".format(VAL_DIR,j))
         valLens.append(vlength)
-
-
-
-
-    #print(lenA,lenB,vlenA,vlenB)
 
     # sample images
     _Z = np.zeros([num_domains,img_size,img_size,3])
@@ -90,7 +87,6 @@ def main():
     _Z = tileImage(_Z)
     cv2.imwrite("input.png",_Z)
 
-
     #build models
     start = time.time()
 
@@ -98,14 +94,8 @@ def main():
     real_B = tf.placeholder(tf.float32, [bs, img_size, img_size, 3 ])
     label_A2B = tf.placeholder(tf.float32, [bs, num_domains]) # target image atr
     label_A = tf.placeholder(tf.float32, [bs, num_domains]) # input image atr
-    #one_hot_label_A2B = tf.one_hot(label_A2B,num_domains)
-    #one_hot_label_A = tf.one_hot(label_A,num_domains)
-
-    #use for updating dis
-    #fake_A2B_sample = tf.placeholder(tf.float32, [bs, img_size, img_size, 3])
 
     fake_A2B = buildGenerator(real_A,label_A2B,num_domains, reuse=False, nBatch=bs, name="gen")
-    #sample_B2A = tf.concat([fake_A2B,real_A[:,:,:,3:]], axis=3)
     fake_B2A = buildGenerator(fake_A2B,label_A,num_domains, reuse=True, nBatch=bs, name="gen")
 
     #adv: real or fake, cls: domain classification
@@ -118,13 +108,15 @@ def main():
     adv_fake_A2B_d, _cls_fake_A2B_d = buildDiscriminator(fake_A2B,num_domains, nBatch=bs, reuse=True, name="dis")
 
     #ls gan
+
     d_loss_real = tf.reduce_mean((adv_real_B-tf.ones_like (adv_real_B))**2)
     d_loss_fake = tf.reduce_mean((adv_fake_A2B_d-tf.zeros_like (adv_fake_A2B_d))**2)
-    d_cls_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=cls_real_B,labels=label_A ))
+    d_cls_loss = -tf.reduce_mean(label_A* tf.log(tf.clip_by_value(cls_real_B, 1e-10, 1.0)))
     d_loss = d_loss_real + d_loss_fake + d_cls_loss
     g_adv_loss      = tf.reduce_mean((adv_fake_A2B_d-tf.ones_like (adv_fake_A2B_d))**2)
 
-    g_cls_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=cls_fake_A2B_g,labels=label_A2B ))
+    #g_cls_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=cls_fake_A2B_g,labels=label_A2B ))
+    g_cls_loss = -tf.reduce_mean(label_A2B* tf.log(tf.clip_by_value(cls_fake_A2B_g, 1e-10, 1.0)))
 
     real_A_img = real_A[:,:,:,:3]
     g_recon_loss = tf.reduce_mean(tf.abs(real_A_img - fake_B2A))
@@ -139,7 +131,6 @@ def main():
     g_loss += wd_gen
     d_loss += wd_dis
 
-
     g_opt = tf.train.AdamOptimizer(lr,beta1=0.5).minimize(g_loss,
                     var_list=[x for x in tf.trainable_variables() if "gen" in x.name])
     d_opt = tf.train.AdamOptimizer(lr,beta1=0.5).minimize(d_loss,
@@ -147,7 +138,6 @@ def main():
 
     printParam(scope="gen")
     printParam(scope="dis")
-
 
     print("%.4e sec took building model"%(time.time()-start))
 
@@ -196,32 +186,10 @@ def main():
             bt_images[j] = img
             directions[j] = dir
 
-
-
-        #print(id)
-        #print(num_domains)
-        #print(directions)
-        #print(np.identity(num_domains))
         directions = np.vectorize(int)(directions)
         one_hot_dir = np.identity(num_domains)[directions]
         one_hot_id = np.identity(num_domains)[id]
-        #print(one_hot_id)
-        #print(one_hot_dir)
-        #print(one_hot_dir)
-        #print(one_hot_id)
-        #one_hot_id = np.identity(num_domains)[id]
-        #ones = np.ones([bs,img_size,img_size,num_domains])
-        #one_hot_dir = one_hot_dir * ones
-        #dataA = np.concatenate([bt_images,one_hot_dir],axis=3)
 
-
-        #img_fake_A2B = sess.run(fake_A2B,feed_dict={
-        #    real_A:dataA})
-
-
-            #print(directions)
-            #print(label_A)
-            #print(trans_lr)
         feed ={real_A: bt_images, real_B: bt_images, label_A2B: one_hot_dir,
             label_A : one_hot_id, lr: trans_lr}
         _, dis_loss, d_r, d_f, d_c =sess.run(
@@ -234,11 +202,7 @@ def main():
             [g_opt,g_loss,g_adv_loss,g_cls_loss,g_recon_loss], feed_dict=feed)
 
         trans_lr = trans_lr *(1 - 1/max_step)
-        #trans_lmd = trans_lmd - trans_lmd/(2*max_step)
 
-        #print(i)
-        #print(dis_loss)
-        #print(gen_loss)
         print("in step %s, dis_loss = %.4e,  gen_loss = %.4e"%(i,dis_loss, gen_loss))
         print("d_r=%.3e d_f=%.3e d_c=%.3e g_a=%.3e g_c=%.3e g_r=%.3e "%(d_r,d_f,d_c,g_a,g_c,g_r))
 

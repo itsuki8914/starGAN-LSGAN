@@ -55,3 +55,10 @@ example:
 ```
 python test.py test/domain2 4
 ```
+
+## Result examples
+Hair color conversion of anime face
+
+Leftmost is input, others are output.
+
+<img src = 'examples/hair_color.jpg' width = '300px'>

@@ -6,12 +6,52 @@ original paper:https://arxiv.org/abs/1711.09020
 original implementation:https://github.com/yunjey/stargan
 
 ## usage
-put folders like "train/trainblk", "train/trainbld" and "train/trainblu"... 
+like this
+```
+main.py
+pred.py
+train
+  ├ domain0
+  |   ├ aaa.png
+  |   ...
+  |   └ zzz.jpg      
+  ├ domain1
+  |   ├ bbb.png
+  |   ...
+  |   └ xxx.jpg
+  ...
+  └ domainN
+      ├ ccc.png
+      ...
+      └ yyy.jpg      
+test
+  ├ domain0
+  |   ├ AAA.png
+  |   ...
+  |   └ ZZZ.jpg      
+  ├ domain1
+  |   ├ BBB.png
+  |   ...
+  |   └ XXX.jpg
+  ...
+  └ domainN
+      ├ CCC.png
+      ...
+      └ YYY.jpg   
+```
 
-as well put folders like "test/testblk", "val/testbld" and "val/testblu"... 
+To train
 
-you can fix in line61 of "mainls.py".
+```
+python main.py
+```
 
-After, run "python mainls.py" starts training.
+To Validate, must feed the folder location and attributes. 
 
-when training is over, run like "python pred.py test/testblk 1" executes predicting, outputs converted images.
+In below example, the images located test/domain2 are converted to 4th attribute (maybe domain4).
+
+example:
+
+```
+python test.py test/domain2 4
+```

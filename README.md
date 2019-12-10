@@ -8,7 +8,7 @@ original implementation:https://github.com/yunjey/stargan
 ## usage
 like this
 ```
-main.py
+mainls.py
 pred.py
 train
   ├ domain0
@@ -43,7 +43,7 @@ test
 To train
 
 ```
-python main.py
+python mainls.py
 ```
 
 To Validate, must feed the folder location and attributes. 

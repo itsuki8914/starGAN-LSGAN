@@ -53,7 +53,7 @@ In below example, the images located test/domain2 are converted to 4th attribute
 example:
 
 ```
-python test.py test/domain2 4
+python test.py test/domain2 3
 ```
 
 ## Result examples
